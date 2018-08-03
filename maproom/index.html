@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>UCLA Workshops on a Map</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- mapbox -->
+	<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.js'></script>
+	<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.css' rel='stylesheet' />
+
+	<!-- jQuery -->
+	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+
+	<!-- data table -->
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+
+	<!-- bootstrap -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+	<link rel="stylesheet" href="styles/style.css">
+
+</head>
+<body>
+
+<div class="container-fluid h-100">
+	<div class="row h-100">
+		<!-- left side: map -->
+		<div class="col-sm fill no-padding">
+			<div id="map"></div>
+			<!-- <div class='nav-overlay'></div> -->
+		</div>
+		
+		<!-- right side: data -->
+		<div class="col-sm " id="data-panel" style="background-color: white">
+			<div id="info-panel"></div>
+
+		</div>
+	</div>
+</div>
+
+	<script type="text/javascript" charset="utf8" src="data/campusbuildings.js"></script>
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoieW9obWFuIiwiYSI6IkxuRThfNFkifQ.u2xRJMiChx914U7mOZMiZw';
+// mapboxgl.accessToken = 'pk.eyJ1IjoidWNsYW1hcGJveCIsImEiOiJjZmU3MGI0ZjZkZGQyNjU5OWJhZmQ4YzJhNzNlNmIwOCJ9.kP0-NFKLGF19JSfv2XeD2Q';
+
+
+var map = new mapboxgl.Map({
+	container: 'map',
+	// style: 'mapbox://styles/yohman/cjka8xrk81agr2rmd64iskbuf',
+	// style: 'mapbox://styles/mapbox/streets-v9',
+	style: 'mapbox://styles/mapbox/light-v9',
+	// style: 'mapbox://styles/uclamapbox/cjd3k6iiq4eg22smk6vq2az80',
+	// style: 'mapbox://styles/yohman/cji3etfkm1jp12rta2mun8d62',
+	center: [-118.446, 34.069],
+	pitch: 45,
+	// bearing: -17.6,
+	minZoom: 13,
+	maxZoom: 20,
+	zoom: 15
+});
+
+
+
+
+map.on('load', function() {
+
+	map.addSource('ucla', {
+		'type': 'vector',
+		'url': 'mapbox://yohman.cjka8kl5y00pgdasaploknfzb-4p879'
+	});
+
+	map.addLayer({
+		"id": "ucla",
+		"type": "fill-extrusion",
+		"source": "ucla",
+		"source-layer": "ucla_buildings",
+		"paint": {
+			"fill-extrusion-color": "black",
+			"fill-extrusion-opacity": 0.1,
+			"fill-extrusion-height": 20
+		},
+	}, 'place-city-sm'); // Place polygon under these labels.
+
+	map.addLayer({
+		"id": "ucla-selected",
+		"type": "fill-extrusion",
+		"source": "ucla",
+		"source-layer": "ucla_buildings",
+		"paint": {
+			"fill-extrusion-color": "red",
+			"fill-extrusion-opacity": 0.5,
+			"fill-extrusion-height": 80
+		},
+		"filter": ["in", "NAM", ""]
+	}, 'place-city-sm'); // Place polygon under these labels.
+});
+
+
+$.getJSON('https://sandbox.idre.ucla.edu/workshops/wp-json/tribe/events/v1/events',function(data){
+	console.log(data)
+
+	var html = ''
+	$.each(data.events,function(i, val){
+		console.log(val)
+		var venue = val.venue.venue
+		venue = venue.replace(/ /g,"-")
+		html += '<div class="card" style="margin:10px 0px" onmouseover=highlightBuilding(\''+venue+'\')><div class="card-body"><h5 class="card-title">'+val.title+'</h5><p class="card-muted">'+val.venue.venue+' '+val.start_date+'</p><p class="card-text">'+val.description+'</p></div></div>'
+		// html += '<tr onmouseover=highlightBuilding(\''+venue+'\')><td><b>'+val.title+'</b><br>'+val.venue.venue+'</td></tr>'
+	})
+	html += '</tr></table>'
+
+	$('#info-panel').html(html)
+})
+
+function highlightBuilding(building)
+{
+	console.log(building)
+	building = building.replace(/-/g," ")
+
+	map.setFilter("ucla-selected",["in","NAM",building])
+}
+</script>
+
+</body>
+</html>
